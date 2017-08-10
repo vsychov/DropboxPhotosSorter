@@ -32,7 +32,7 @@ func main() {
 
 	dropboxCameraUploadPath := flag.String("dropboxCameraUploadPath", dropboxDefaultPath, "path to processing dir")
 	isNeedRenameFiles := flag.Bool("isNeedRenameFiles", true, "rename files to YYYY-mm-dd H.i.s.ext format, or leave as is (add number in file end, if name duplicate)")
-	isNeedSortRecursive := flag.Bool("isNeedSortRecursive", true, "sort only specyfied dir, or all internal dirs too")
+	isNeedSortRecursive := flag.Bool("isNeedSortRecursive", false, "sort only specyfied dir, or all internal dirs too")
 	isNeedRemoveDuplicates := flag.Bool("isNeedRemoveDuplicates", false, "if true, script will remove all file duplicates (use sha512)")
 
 	flag.Parse();
@@ -235,7 +235,6 @@ func getDropboxRootPathByConfigFile() (string, error) {
 //Return cross platform path to dropbox settings file
 //Info - https://www.dropbox.com/help/desktop-web/find-folder-paths
 func getDropboxSettingsFilePath() string {
-	//dropboxCameraUploadsPath := "."
 	if runtime.GOOS == "windows" {
 		appDataPath := os.Getenv("APPDATA");
 		localAppDataPath := os.Getenv("LOCALAPPDATA");
@@ -250,7 +249,7 @@ func getDropboxSettingsFilePath() string {
 			return dropboxLocalAppDataJsonFilePath
 		}
 	} else if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
-		dropboxJsonFilePath, err := filepath.Abs("~/.dropbox/info.json");
+		dropboxJsonFilePath, err := filepath.Abs(filepath.Join(os.Getenv("HOME"), ".dropbox", "info.json"));
 		if err != nil {
 			log.Fatal(err)
 		}
