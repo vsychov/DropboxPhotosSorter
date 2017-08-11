@@ -17,6 +17,7 @@ import (
 	"encoding/hex"
 	"crypto/sha512"
 	"io"
+	"github.com/fsnotify/fsnotify"
 )
 
 const CAMERA_UPLOADS_DIR_NAME string = "Camera Uploads"
@@ -41,6 +42,37 @@ func main() {
 	fmt.Println(fmt.Sprintf("Need to sort recursive: %s", strconv.FormatBool(*isNeedSortRecursive)))
 
 	sortDirectory(dropboxDefaultPath, "", *isNeedRenameFiles, *isNeedSortRecursive, *isNeedRemoveDuplicates);
+	watchDirectory(dropboxDefaultPath)
+}
+
+func watchDirectory(rootDirectoryPath string) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Panic(err)
+	}
+	defer watcher.Close()
+
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				log.Println("event:", event)
+				if event.Op & fsnotify.Write == fsnotify.Write {
+					log.Println("modified file:", event.Name, event.Op)
+				}
+			case err := <-watcher.Errors:
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	err = watcher.Add(rootDirectoryPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	<-done
 }
 
 //recursive call method
@@ -131,6 +163,16 @@ func sortFile(fileAbsPath string, rootDirectoryPath string, isNeedToRename bool,
 		".avi": true,
 		".mp4": true,
 		".mpg": true,
+	}
+
+	skipExt := map[string]bool{
+		".ini": true,
+		".dropbox": true,
+	}
+
+	if _, ok := skipExt[strings.ToLower(fileExt)]; ok {
+		log.Println("Skip file: ", fileName)
+		return;
 	}
 
 	if _, ok := videoExt[strings.ToLower(fileExt)]; ok {
