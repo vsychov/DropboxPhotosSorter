@@ -157,7 +157,7 @@ func sortFile(fileAbsPath string, rootDirectoryPath string, isNeedToRename bool,
 	}
 
 	if _, err := os.Stat(newDateFolderAbs); err != nil {
-		err := os.MkdirAll(newDateFolderAbs, 0644)
+		err := os.MkdirAll(newDateFolderAbs, 0755)
 		if err != nil {
 			log.Panic(err)
 		}
